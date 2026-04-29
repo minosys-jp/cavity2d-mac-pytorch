@@ -1,2 +1,2 @@
-# cavity2d-mac
-Analyze Cavity 2D problem by MAC method
+# cavity2d-mac-pytorch
+Analyze Cavity 2D problem by MAC method with PyTorch
