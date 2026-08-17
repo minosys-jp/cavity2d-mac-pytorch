@@ -344,5 +344,3 @@ class TritonClass(GpuClass):
             self.u.stride(0), self.u.stride(1), self.v.stride(0), self.v.stride(1),
             self.p.stride(0), self.p.stride(1), self.ub.stride(0), self.ub.stride(1),
             self.d, self.dt, self.re, M, N, BLOCK_M=32, BLOCK_N=32)
-
-TrironClass = TritonClass

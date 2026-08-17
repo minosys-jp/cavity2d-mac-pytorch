@@ -12,3 +12,6 @@ class GpuClass(BaseClass):
 
     def to_cpu(self):
         return (self.u.cpu().numpy(), self.v.cpu().numpy(), self.p.cpu().numpy())
+
+    def synchronize(self):
+        torch.cuda.synchronize()

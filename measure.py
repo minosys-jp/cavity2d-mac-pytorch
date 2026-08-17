@@ -3,7 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from cpu import CpuClass
 from gpu import GpuClass
-from gpu_triton import TrironClass
+from gpu_triton import TritonClass
 import numpy as np
 import time
 
@@ -52,7 +52,7 @@ def draw_fig(ax, name, val, n, t):
     plt.savefig(f"images/{name}_{t:06d}.png", bbox_inches='tight')
 
 # メイン関数
-def app(n, Re, u0, dt, shot, dtype):
+def app(n, Re, u0, shot, dtype):
     # 各実行クラスのインスタンスを作成する
     d = dict()
     d["cpu"] = CpuClass(n=n, Re=Re, u0=u0, dt=dt, dtype=dtype)
@@ -62,15 +62,27 @@ def app(n, Re, u0, dt, shot, dtype):
     # 時間発展させる
     os.makedirs("images", exist_ok=True)
     fig, ax = plt.subplots(figsize=(20, 10))
+
+    # 最初は warm-up
+    print("Warming up...")
     for name, inst in d.items():
+        for t in range(max(1, int(1e-5 / dt))):
+            inst.one_loop()
+
+    
+    print(f"N={n}, Re={Re}, dt={dt}, dtype={dtype}")
+    for name, inst in d.items():
+        inst.clear()
         shot_count = 0
+        inst.synchronize()
         start_time = time.time()
-        for t in range(max(1, int(1e-4 / dt))):
+        for t in range(max(1, int(1e-5 / dt))):
             inst.one_loop()
             if t % shot == 0:
                 val = inst.to_cpu()
                 shot_count += 1
                 draw_fig(ax=ax, name=name, val=val, n=n, t=shot_count)
+        inst.synchronize()
         end_time = time.time()
         elapsed = end_time - start_time
         print(f"calculated {name}: elapsed:{elapsed} sec")
@@ -78,16 +90,23 @@ def app(n, Re, u0, dt, shot, dtype):
 # メイン関数呼び出し
 if __name__ == "__main__":
     # 格子数
-    n = 30
-    # レイノルズ数
-    Re = 100
-    # 蓋の速度
-    u0 = 1.0
-    # 刻み時間
-    dt = 1e-5
-    # スクリーンショット間隔
-    shot = 1
-    # 計算精度
-    dtype = torch.float64
+    ns = [50, 100, 150]
 
-    app(n=n, Re=Re, u0=u0, dt=dt, shot=shot, dtype=dtype)
+    # レイノルズ数
+    Res = [50, 50, 50]
+
+    # 蓋の速度
+    u0s = [1.0, 1.0, 1.0]
+
+    # 刻み時間
+    dts = [1e-6, 1e-6, 1e-6]
+
+    # スクリーンショット間隔
+    shots = [1, 1, 1]
+
+    # 計算精度
+    dtypes = [torch.float64, torch.float64, torch.float64]
+    #dtypes = [torch.float32, torch.float32, torch.float32]
+
+    for n, Re, u0, dt, shot, dtype in zip(ns, Res, u0s, dts, shots, dtypes):
+        app(n, Re, u0, shot, dtype)

@@ -3,7 +3,7 @@ import math
 import torch
 
 class BaseClass:
-    def __init__(self, n, Re, u0, dt, dtype , device):
+    def __init__(self, n, Re, u0, dt, dtype, device):
         # CUDA が利用できることを確認する
         if device == "cuda":
             assert torch.cuda.is_available()
@@ -16,24 +16,27 @@ class BaseClass:
         self.dt = dt
         self.dtype = dtype
         self.device = device
-        self.epsilon = 1e-3
+        self.epsilon = 1e-4
 
+        self.clear()
+
+    def clear(self):
         # 格子作成
         # p は格子内側の中心に定義されるため、行や列の数が2少ないことに注意
-        self.p = torch.zeros(n + 2, n + 2, dtype=dtype, device=device)
-        self.u = torch.zeros(n + 3, n + 2, dtype=dtype, device=device)
-        self.v = torch.zeros(n + 2, n + 3, dtype=dtype, device=device)
+        self.p = torch.zeros(self.n + 2, self.n + 2, dtype=self.dtype, device=self.device)
+        self.u = torch.zeros(self.n + 3, self.n + 2, dtype=self.dtype, device=self.device)
+        self.v = torch.zeros(self.n + 2, self.n + 3, dtype=self.dtype, device=self.device)
 
         # NS 方程式の右辺計算式のメモリ確保
-        self.p_rhs = torch.zeros(n, n, dtype=dtype, device=device)
-        self.u_rhs = torch.zeros(n, n, dtype=dtype, device=device)
-        self.v_rhs = torch.zeros(n, n, dtype=dtype, device=device)
+        self.p_rhs = torch.zeros(self.n, self.n, dtype=self.dtype, device=self.device)
+        self.u_rhs = torch.zeros(self.n, self.n, dtype=self.dtype, device=self.device)
+        self.v_rhs = torch.zeros(self.n, self.n, dtype=self.dtype, device=self.device)
 
         # 補助変数のメモリ確保
-        self.ld = torch.zeros(n, n, dtype=dtype, device=device)
-        self.ub = torch.zeros(n, n, dtype=dtype, device=device)
-        self.vb = torch.zeros(n, n, dtype=dtype, device=device)
-        self.p_uv = torch.zeros(n, n, dtype=dtype, device=device)
+        self.ld = torch.zeros(self.n, self.n, dtype=self.dtype, device=self.device)
+        self.ub = torch.zeros(self.n, self.n, dtype=self.dtype, device=self.device)
+        self.vb = torch.zeros(self.n, self.n, dtype=self.dtype, device=self.device)
+        self.p_uv = torch.zeros(self.n, self.n, dtype=self.dtype, device=self.device)
 
     def set_boundary_da(self):
         self.p[0, :] = self.p[1, :] + (self.u[3, :] - 2.0 * self.u[2, :]) / self.d / self.re
@@ -144,3 +147,8 @@ class BaseClass:
     # 物理量を CPU に転送
     def to_cpu(self):
         return (self.u.numpy(), self.v.numpy(), self.p.numpy())
+
+    # CPU/GPU 同期(Cuda の場合のみ)
+    def synchronize(self):
+        return
+

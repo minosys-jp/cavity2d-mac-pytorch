@@ -1,1 +1,1 @@
-from .core import TritonClass, TrironClass
+from .core import TritonClass
